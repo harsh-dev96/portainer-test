@@ -1,0 +1,22 @@
+{
+	"ha":	{
+		"clustername":	"portainer-trial",
+		"uuid":	"E60148E7-2B91-4560-22E4-856E27CDE9CD",
+		"nodes":	[{
+				"address":	"mosquitto1",
+				"port":	7000,
+				"nodeid":	1
+			}, {
+				"address":	"mosquitto3",
+				"port":	7000,
+				"nodeid":	3,
+				"mynode":	true
+			}, {
+				"address":	"mosquitto2",
+				"port":	7000,
+				"nodeid":	2
+			}],
+		"version":	1,
+		"syncmode":	"full"
+	}
+}

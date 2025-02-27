@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+    mosquitto1:
+        image: registry.cedalo.com/mosquitto/mosquitto:3.0
+        volumes:
+            - ./server1/mosquitto/config:/mosquitto/config
+            - ./server1/mosquitto/data:/mosquitto/data
+        hostname: mosquitto1
+        networks:
+            mosquitto:
+              ipv4_address: 172.20.1.1
+        environment:
+            MOSQUITTO_DYNSEC_PASSWORD: ${MOSQUITTO_DYNSEC_PASSWORD}
+            CEDALO_LICENSE_KEY: ${CEDALO_LICENSE_KEY}
+        restart: unless-stopped
+
+    haproxy:
+        image: haproxy:2.7
+        ports:
+            - 0.0.0.0:1883:1883
+        volumes:
+            - ./haproxy:/usr/local/etc/haproxy:ro
+        restart: unless-stopped
+        networks:
+            mosquitto:
+              ipv4_address: 172.20.2.1
+
+    platform:
+        image: registry.cedalo.com/platform/enterprise:3.0
+        platform: linux/amd64
+        ports:
+            - 0.0.0.0:3000:3000
+        networks:
+            mosquitto:
+                ipv4_address: 172.20.3.1
+        environment:
+            API_INTERNAL_HOST: platform
+            BASE_URL: http://localhost:3000
+            NEXTAUTH_URL: http://localhost:3000
+            MOSQUITTO_PLATFORM_LICENSE_FILE: /platform/license/license.lic
+            AUTH_SECRET: XtVbUhjC-egWIh8h
+            SETUP_TYPE: cluster
+            CEDALO_LICENSE_KEY: ${CEDALO_LICENSE_KEY}
+        volumes:
+            - ./server1/platform/data:/data
+
+            - /dev/log:/dev/log
+        restart: unless-stopped
+    mosquitto2:
+        image: registry.cedalo.com/mosquitto/mosquitto:3.0
+        volumes:
+            - ./server2/mosquitto/config:/mosquitto/config
+            - ./server2/mosquitto/data:/mosquitto/data
+        hostname: mosquitto2
+        networks:
+            mosquitto:
+              ipv4_address: 172.20.1.2
+        environment:
+            MOSQUITTO_DYNSEC_PASSWORD: ${MOSQUITTO_DYNSEC_PASSWORD}  
+            CEDALO_LICENSE_KEY: ${CEDALO_LICENSE_KEY}
+        restart: unless-stopped
+
+
+    mosquitto3:
+        image: registry.cedalo.com/mosquitto/mosquitto:3.0
+        volumes:
+            - ./server3/mosquitto/config:/mosquitto/config
+            - ./server3/mosquitto/data:/mosquitto/data
+        hostname: mosquitto3
+        networks:
+            mosquitto:
+              ipv4_address: 172.20.1.3
+        environment:
+            MOSQUITTO_DYNSEC_PASSWORD: ${MOSQUITTO_DYNSEC_PASSWORD}
+            CEDALO_LICENSE_KEY: ${CEDALO_LICENSE_KEY}
+        restart: unless-stopped
+
+networks:
+    mosquitto:
+      name: mosquitto
+      ipam:
+        driver: default
+        config:
+          - subnet: 172.20.0.0/16
+
