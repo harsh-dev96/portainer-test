@@ -20,7 +20,7 @@ services:
         ports:
             - 0.0.0.0:1883:1883
         volumes:
-            - ./haproxy:/usr/local/etc/haproxy:ro
+            - ./server1/haproxy:/usr/local/etc/haproxy:ro
         restart: unless-stopped
         networks:
             mosquitto:
