@@ -27,7 +27,7 @@ services:
               ipv4_address: 172.20.2.1
 
     platform:
-        image: registry.cedalo.com/platform/enterprise:3.0
+        image: registry.cedalo.com/platform/enterprise:portainer-latest 
         platform: linux/amd64
         ports:
             - 0.0.0.0:3000:3000
@@ -38,7 +38,6 @@ services:
             API_INTERNAL_HOST: platform
             BASE_URL: http://localhost:3000
             NEXTAUTH_URL: http://localhost:3000
-            MOSQUITTO_PLATFORM_LICENSE_FILE: /platform/license/license.lic
             AUTH_SECRET: XtVbUhjC-egWIh8h
             SETUP_TYPE: cluster
             CEDALO_LICENSE_KEY: ${CEDALO_LICENSE_KEY}
