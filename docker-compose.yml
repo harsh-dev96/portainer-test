@@ -6,7 +6,7 @@ services:
         command: >
           /bin/sh -c "
             # Ensure the environment variable MOSQUITTO_DYNSEC_PASSWORD is set
-            if [ -z \"\$MOSQUITTO_DYNSEC_PASSWORD\" ]; then
+            if [ -z \"\${MOSQUITTO_DYNSEC_PASSWORD}\" ]; then
               echo 'Error: MOSQUITTO_DYNSEC_PASSWORD is not set!';
               exit 1;
             fi
