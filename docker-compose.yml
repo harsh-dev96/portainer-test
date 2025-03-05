@@ -5,8 +5,14 @@ services:
         image: busybox:1.35.0-uclibc
         command: >
           /bin/sh -c "
-            # Load environment variable
-            PASSWORD=${MOSQUITTO_DYNSEC_PASSWORD}
+            # Ensure the environment variable MOSQUITTO_DYNSEC_PASSWORD is set
+            if [ -z \"\$MOSQUITTO_DYNSEC_PASSWORD\" ]; then
+              echo 'Error: MOSQUITTO_DYNSEC_PASSWORD is not set!';
+              exit 1;
+            fi
+
+            # Load environment variables
+            PASSWORD=\${MOSQUITTO_DYNSEC_PASSWORD}
 
             # Generate random salt
             SALT=\$(openssl rand -hex 16)
