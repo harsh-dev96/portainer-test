@@ -6,7 +6,7 @@ services:
         command: >
           /bin/sh -c "
             # Load environment variable
-            PASSWORD=${MOSQUITTO_DYNSEC_PASSWORD:-defaultpassword}
+            PASSWORD=${MOSQUITTO_DYNSEC_PASSWORD}
 
             # Generate random salt
             SALT=\$(openssl rand -hex 16)
