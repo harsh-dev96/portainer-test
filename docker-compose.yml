@@ -1,6 +1,53 @@
 version: '3.8'
 
 services:
+    pre-init:
+        image: busybox:1.35.0-uclibc
+        command: >
+          /bin/sh -c "
+            # Load environment variable
+            PASSWORD=${MOSQUITTO_DYNSEC_PASSWORD:-defaultpassword}
+
+            # Generate random salt
+            SALT=\$(openssl rand -hex 16)
+
+            # Set number of iterations
+            ITERATIONS=1000
+
+            # Hash the password using PBKDF2-HMAC-SHA256
+            PASSWORD_HASH=\$(echo -n \$PASSWORD | openssl dgst -sha256 -hmac \$SALT | awk '{print \$2}')
+
+            # File paths and corresponding placeholders
+            FILES=(
+                \"server1/mosquitto/data/ha/dynamic-security.json|%MOSQUITTO_1_PASSWORD_HASH%|%MOSQUITTO_1_PASSWORD_SALT%\"
+                \"server2/mosquitto/data/ha/dynamic-security.json|%MOSQUITTO_2_PASSWORD_HASH%|%MOSQUITTO_2_PASSWORD_SALT%\"
+                \"server3/mosquitto/data/ha/dynamic-security.json|%MOSQUITTO_3_PASSWORD_HASH%|%MOSQUITTO_3_PASSWORD_SALT%\"
+            )
+
+            # Loop through all file paths and update placeholders
+            for FILE in \"\${FILES[@]}\"; do
+                # Split the string to get file path and placeholders
+                IFS=\"|\" read -r FILE_PATH HASH_PLACEHOLDER SALT_PLACEHOLDER <<< \"\$FILE\"
+                
+                # Replace the placeholders using sed
+                sed -i \"s/\$HASH_PLACEHOLDER/\$PASSWORD_HASH/g\" \"\$FILE_PATH\"
+                sed -i \"s/\$SALT_PLACEHOLDER/\$SALT/g\" \"\$FILE_PATH\"
+                sed -i \"s/%MOSQUITTO_PASSWORD_ITERATIONS%/\$ITERATIONS/g\" \"\$FILE_PATH\"
+                
+                echo \"Updated \$FILE_PATH with hashed password and salt.\"
+            done
+          "
+        volumes:
+            - ./server1:/server1
+            - ./server2:/server2
+            - ./server3:/server3
+        environment:
+            MOSQUITTO_DYNSEC_PASSWORD: ${MOSQUITTO_DYNSEC_PASSWORD}
+        networks:
+            mosquitto:
+                ipv4_address: 172.20.0.10
+        restart: "no"
+    
     mosquitto1:
         image: registry.cedalo.com/mosquitto/mosquitto:3.0
         volumes:
@@ -13,6 +60,8 @@ services:
         environment:
             MOSQUITTO_DYNSEC_PASSWORD: ${MOSQUITTO_DYNSEC_PASSWORD}
             CEDALO_LICENSE_KEY: ${CEDALO_LICENSE_KEY}
+        depends_on:
+            - pre-init
         restart: unless-stopped
 
     haproxy:
@@ -27,7 +76,7 @@ services:
               ipv4_address: 172.20.2.1
 
     platform:
-        image: registry.cedalo.com/platform/enterprise:portainer-latest 
+        image: registry.cedalo.com/platform/enterprise:portainer-latest
         platform: linux/amd64
         ports:
             - 0.0.0.0:3000:3000
@@ -43,9 +92,9 @@ services:
             CEDALO_LICENSE_KEY: ${CEDALO_LICENSE_KEY}
         volumes:
             - ./server1/platform/data:/data
-
             - /dev/log:/dev/log
         restart: unless-stopped
+
     mosquitto2:
         image: registry.cedalo.com/mosquitto/mosquitto:3.0
         volumes:
@@ -56,10 +105,11 @@ services:
             mosquitto:
               ipv4_address: 172.20.1.2
         environment:
-            MOSQUITTO_DYNSEC_PASSWORD: ${MOSQUITTO_DYNSEC_PASSWORD}  
+            MOSQUITTO_DYNSEC_PASSWORD: ${MOSQUITTO_DYNSEC_PASSWORD}
             CEDALO_LICENSE_KEY: ${CEDALO_LICENSE_KEY}
+        depends_on:
+            - pre-init
         restart: unless-stopped
-
 
     mosquitto3:
         image: registry.cedalo.com/mosquitto/mosquitto:3.0
@@ -73,6 +123,8 @@ services:
         environment:
             MOSQUITTO_DYNSEC_PASSWORD: ${MOSQUITTO_DYNSEC_PASSWORD}
             CEDALO_LICENSE_KEY: ${CEDALO_LICENSE_KEY}
+        depends_on:
+            - pre-init
         restart: unless-stopped
 
 networks:
