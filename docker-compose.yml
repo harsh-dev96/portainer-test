@@ -12,7 +12,7 @@ services:
             fi
 
             # Load environment variables
-            PASSWORD=\${MOSQUITTO_DYNSEC_PASSWORD}
+            PASSWORD=ILOh9240KwuuMPIl
 
             # Generate random salt
             SALT=\$(openssl rand -hex 16)
